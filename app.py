@@ -1,59 +1,87 @@
 import streamlit as st
 import requests
 import pandas as pd
+from datetime import datetime
+import random
 
-# رابطك الجديد والنهائي
-API_URL = "https://script.google.com/macros/s/AKfycbw1dL-U7qw0apQ5UZO0226QzTDhFIneAldHdUlzTTyuT6rC2FGNM3SNNAC5eU1iwsxVVg/exec"
+# إعدادات الأمان
+PASSWORD = "admin"  # يمكنك تغيير كلمة المرور هنا
 
-st.set_page_config(page_title="نظام شركة السفر الموحد", layout="wide", page_icon="🌍")
+# رابط الـ Web App الخاص بك
+API_URL = "https://google.com"
 
-# تنسيق الواجهة للغة العربية
-st.markdown("""<style> .main { text-align: right; direction: rtl; } div[data-testid="stSidebar"] { direction: rtl; } </style>""", unsafe_allow_html=True)
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state.password_correct = False
+    if not st.session_state.password_correct:
+        st.markdown("<h2 style='text-align: center;'>🔐 تسجيل الدخول للنظام</h2>", unsafe_allow_html=True)
+        pwd = st.text_input("أدخل كلمة المرور", type="password")
+        if st.button("دخول"):
+            if pwd == PASSWORD:
+                st.session_state.password_correct = True
+                st.rerun()
+            else: st.error("❌ كلمة المرور خاطئة")
+        return False
+    return True
 
-st.title("🌍 نظام إدارة الشركة (بيلاروسيا 🇧🇾 - مصر 🇪🇬)")
-st.write("---")
+if check_password():
+    st.set_page_config(page_title="Travel ERP 2026", layout="wide")
 
-menu = ["🏠 عرض قاعدة البيانات", "➕ تسجيل عميل جديد"]
-choice = st.sidebar.selectbox("القائمة الرئيسية", menu)
+    # تصميم عصري CSS
+    st.markdown("""
+        <style>
+        @import url('https://googleapis.com');
+        * { font-family: 'Cairo', sans-serif; direction: rtl; }
+        .stButton>button { background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 10px; height: 3em; border: none; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        </style>
+    """, unsafe_allow_html=True)
 
-if choice == "🏠 عرض قاعدة البيانات":
-    st.subheader("📋 قائمة البيانات الحالية")
-    if st.button("تحديث البيانات 🔄"):
-        try:
-            with st.spinner('جاري التحميل...'):
-                response = requests.get(API_URL)
-                data = response.json()
-                if len(data) > 0:
-                    df = pd.DataFrame(data[1:], columns=data[0])
-                    st.table(df) # عرض كجدول ثابت وواضح
-                else:
-                    st.info("لا توجد بيانات حالياً.")
-        except:
-            st.error("فشل في الاتصال بجوجل شيت.")
+    st.sidebar.title("🛂 لوحة التحكم")
+    choice = st.sidebar.selectbox("القائمة", ["🏠 الرئيسية", "👤 تسجيل عميل جديد", "🔍 بحث وطباعة"])
 
-elif choice == "➕ تسجيل عميل جديد":
-    st.subheader("✍️ إدخال بيانات العميل")
-    with st.form("main_form", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            id_val = st.text_input("رقم الملف (ID)")
-            name_val = st.text_input("اسم العميل")
-            type_val = st.selectbox("نوع الخدمة", ["طالب", "عقد عمل", "سياحة"])
-            branch_val = st.selectbox("الفرع", ["مصر", "بيلاروسيا"])
-        with col2:
-            status_val = st.selectbox("حالة الملف", ["قيد التجهيز", "بانتظار الموعد", "تم الحجز"])
-            passport_val = st.text_input("رابط الأوراق (Drive)")
-            fee_val = st.text_input("إجمالي المبلغ ($)")
-            paid_val = st.text_input("المبلغ المدفوع ($)")
-        
-        submit = st.form_submit_button("حفظ وإرسال بنجاح ✅")
-        
-        if submit:
-            # الترتيب المطابق للشيت تماماً
-            row = [id_val, name_val, type_val, branch_val, status_val, passport_val, fee_val, paid_val]
-            try:
-                with st.spinner('جاري المزامنة...'):
-                    resp = requests.post(API_URL, json=row)
-                    st.success(f"✅ تم حفظ بيانات العميل ({name_val}) بنجاح في الفرعين!")
-            except:
-                st.error("خطأ في الخادم")
+    if choice == "🏠 الرئيسية":
+        st.markdown("<h1>📊 إحصائيات النظام</h1>", unsafe_allow_html=True)
+        if st.button("🔄 تحديث وعرض البيانات من السحابة"):
+            res = requests.get(API_URL).json()
+            df = pd.DataFrame(res[1:], columns=res)
+            st.dataframe(df, use_container_width=True)
+
+    elif choice == "👤 تسجيل عميل جديد":
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.subheader("📝 إدخال بيانات العميل")
+        with st.form("modern_form", clear_on_submit=True):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                name = st.text_input("الاسم الكامل / Name")
+                passport = st.text_input("رقم الجواز / Passport")
+                phone = st.text_input("الهاتف / Phone")
+                email = st.text_input("الإيميل / Email")
+            with c2:
+                nation = st.text_input("الجنسية / Nationality")
+                residence = st.text_input("الإقامة / Residence")
+                service = st.selectbox("المعاملة / Service", ["دراسة", "عمل", "سياحة"])
+                status = st.selectbox("الحالة / Status", ["قيد المعالجة", "تم الحجز", "مرفوض"])
+            with c3:
+                v_date = st.date_input("موعد السفارة")
+                branch = st.selectbox("الفرع / Branch", ["بيلاروسيا", "مصر"])
+                staff = st.text_input("الموظف / Staff")
+                track = st.text_input("التراك / Tracking")
+            
+            total = st.number_input("إجمالي الحساب / Total ($)")
+            paid = st.number_input("المدفوع / Paid ($)")
+            
+            if st.form_submit_button("حفظ وإصدار الفاتورة ✅"):
+                # البيانات بالترتيب لتتوافق مع Apps Script (ID والباركود سيتم توليدهم تلقائياً)
+                # نرسل 15 حقل فقط، وجوجل سيتولى الباقي
+                data = [name, passport, phone, email, nation, residence, service, status, str(v_date), str(datetime.now().date()), branch, staff, total, paid, track]
+                requests.post(API_URL, json=data)
+                st.success("✅ تم الحفظ والمزامنة بنجاح!")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif choice == "🔍 بحث وطباعة":
+        st.subheader("📑 البحث عن فاتورة")
+        search = st.text_input("ادخل اسم العميل")
+        if search and st.button("عرض الفاتورة"):
+            # كود البحث والطباعة يظهر هنا
+            st.info("سيتم جلب بيانات الفاتورة المصممة للطباعة...")
