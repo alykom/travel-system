@@ -10,24 +10,23 @@ PASSWORD = "admin"
 
 st.set_page_config(page_title="Travel ERP Pro 2026", layout="wide")
 
-# تصميم الفاتورة العصرية (Modern Glass UI)
+# تصميم الفاتورة العصرية (Modern 2026)
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     * { font-family: 'Cairo', sans-serif; direction: rtl; }
     .invoice-card { 
-        background: white; border-top: 15px solid #002147; padding: 40px; border-radius: 10px; 
+        background: white; border: 2px solid #002147; padding: 40px; border-radius: 15px; 
         box-shadow: 0 10px 30px rgba(0,0,0,0.1); direction: rtl; text-align: right; 
-        max-width: 850px; margin: auto; border-bottom: 2px solid #002147;
+        max-width: 800px; margin: auto;
     }
-    .money-badge { background: #f8f9fa; padding: 20px; border-radius: 8px; border-right: 10px solid #002147; margin: 20px 0; }
-    .stTabs [aria-selected="true"] { background: #002147 !important; color: white !important; border-radius: 10px; }
+    .money-badge { background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 10px solid #002147; margin: 15px 0; }
     </style>
 """, unsafe_allow_html=True)
 
 if "auth" not in st.session_state: st.session_state.auth = False
 if not st.session_state.auth:
-    col1, col2, col3 = st.columns([1,2,1])
+    col1, col2, col3 = st.columns(3)
     with col2:
         st.markdown("<h2 style='text-align:center;'>🔐 تسجيل الدخول</h2>", unsafe_allow_html=True)
         pwd = st.text_input("كلمة المرور", type="password")
@@ -38,46 +37,41 @@ if not st.session_state.auth:
 
 tab1, tab2, tab3 = st.tabs(["📊 السجلات", "👤 إضافة عميل", "🔍 البحث والطباعة"])
 
-# --- تسجيل عميل ---
 with tab2:
-    st.subheader("📝 إدخال بيانات ملف جديد")
+    st.subheader("📝 تسجيل ملف جديد")
     with st.form("reg_form", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
         with c1:
             name = st.text_input("اسم العميل")
             passport = st.text_input("رقم الجواز")
             phone = st.text_input("الهاتف")
-            email = st.text_input("الإيميل")
         with c2:
             nation = st.text_input("الجنسية")
-            residence = st.text_input("الإقامة")
             service = st.selectbox("المعاملة", ["دراسة", "عقد عمل", "سياحة"])
-            status = st.selectbox("الحالة", ["قيد المعالجة", "تم الحجز", "مرفوض"])
-        with c3:
-            v_date = st.date_input("موعد السفارة")
             branch = st.selectbox("الفرع", ["بيلاروسيا", "مصر"])
+        with c3:
             staff = st.text_input("الموظف المضيف")
             total = st.number_input("إجمالي المبلغ ($)", min_value=0.0)
             paid = st.number_input("المدفوع ($)", min_value=0.0)
 
-        if st.form_submit_button("حفظ المزامنة وإصدار الفاتورة ✅"):
+        if st.form_submit_button("حفظ المزامنة وإصدار التتبع ✅"):
             # توليد رقم تتبع عشوائي احترافي
             trk = f"TRK-{random.randint(100000, 999999)}-{branch[:2].upper()}"
-            row = [name, passport, phone, email, nation, residence, service, status, str(v_date), str(datetime.now().date()), branch, staff, total, paid, trk]
+            # نرسل البيانات الأساسية (سيتم ملء الفراغات في الشيت تلقائياً)
+            row = [name, passport, phone, "", nation, "", service, "قيد المعالجة", "", str(datetime.now().date()), branch, staff, total, paid, trk]
             try:
                 requests.post(API_URL, json=row)
-                st.success(f"✅ تم الحفظ بنجاح! رقم التتبع الخاص بالعميل: {trk}")
-            except: st.error("فشل في المزامنة مع السحابة")
+                st.success(f"✅ تم الحفظ! رقم التتبع: {trk}")
+            except: st.error("فشل في المزامنة")
 
-# --- البحث والطباعة الذكية ---
 with tab3:
-    st.subheader("🔍 استخراج الفاتورة الذكية")
+    st.subheader("🔍 استخراج الفاتورة")
     search_q = st.text_input("ابحث عن اسم العميل أو رقم جواز السفر")
     if search_q:
         try:
             res = requests.get(API_URL).json()
             df = pd.DataFrame(res[1:], columns=res)
-            # البحث باستخدام ترتيب الأعمدة لتجنب أخطاء التسمية
+            # بحث مرن يتجاهل أسماء الأعمدة ويستخدم الترتيب
             match = df[df.iloc[:, 2].astype(str).str.contains(search_q) | df.iloc[:, 3].astype(str).str.contains(search_q)]
             
             if not match.empty:
@@ -86,34 +80,24 @@ with tab3:
                 <div class="invoice-card">
                     <table style="width:100%">
                         <tr>
-                            <td style="text-align:right"><h1>🧾 فاتورة رسمية</h1><p>International Travel Services</p></td>
+                            <td style="text-align:right"><h1>🧾 فاتورة رسمية</h1></td>
                             <td style="text-align:left"><h2 style="color:#002147">{c.iloc[0]}</h2></td>
                         </tr>
                     </table>
                     <hr>
-                    <div style="display:flex; justify-content:space-between; text-align:right;">
-                        <div>
-                            <p><b>السيد/ة:</b> {c.iloc[2]}</p>
-                            <p><b>رقم الجواز:</b> {c.iloc[3]} | <b>الهاتف:</b> {c.iloc[4]}</p>
-                            <p><b>نوع الخدمة:</b> {c.iloc[8]}</p>
-                        </div>
-                        <div style="text-align:left">
-                            <p><b>التاريخ:</b> {c.iloc[11]}</p>
-                            <p><b>الفرع:</b> {c.iloc[12]}</p>
-                            <p><b>رقم التتبع:</b> {c.iloc[17]}</p>
-                        </div>
-                    </div>
+                    <p><b>السيد/ة:</b> {c.iloc[2]} | <b>الجواز:</b> {c.iloc[3]}</p>
+                    <p><b>نوع الخدمة:</b> {c.iloc[8]} | <b>التاريخ:</b> {c.iloc[11]}</p>
                     <div class="money-badge">
-                        <h3>💰 الموقف المالي:</h3>
+                        <h3>💰 الحساب المالي:</h3>
                         <p>الإجمالي: {c.iloc[14]}$ | المدفوع: {c.iloc[15]}$</p>
                         <h2 style="color:#d32f2f">المتبقي: {c.iloc[16]}$</h2>
                     </div>
-                    <p style="text-align:center; color:gray; margin-top:20px;">الباركود الإلكتروني: {c.iloc[18]} | الموظف: {c.iloc[13]}</p>
+                    <p style="text-align:center;">رقم التتبع: {c.iloc[17]} | الباركود: {c.iloc[18]}</p>
                 </div>
                 """, unsafe_allow_html=True)
-                st.info("💡 نصيحة: اضغط Ctrl + P لطباعة هذه الفاتورة فوراً.")
-            else: st.warning("⚠️ العميل غير موجود في القائمة")
-        except: st.error("خطأ في قراءة البيانات، تأكد من تحديث الشيت")
+                st.button("🖨️ طباعة الفاتورة (Ctrl+P)")
+            else: st.warning("⚠️ العميل غير موجود")
+        except: st.error("تأكد من إدخال بيانات صحيحة في الشيت أولاً")
 
 with tab1:
     if st.button("🔄 تحديث السجلات"):
