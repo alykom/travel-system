@@ -3,97 +3,117 @@ import requests
 import pandas as pd
 from datetime import datetime
 import random
-import barcode
-from barcode.writer import ImageWriter
-import base64
-from io import BytesIO
 
-API_URL = "https://google.com"
-PASSWORD = "admin"
+# الرابط المحدث الخاص بك
+API_URL = "https://script.google.com/macros/s/AKfycbwJzkdxpvzndSeoMi85OyUjK3BFSaU-BTDcaFTJhSBBZ3UdPlJguJXtO-6lJ03wwaTk7w/exec"
+PASSWORD = "admin" # كلمة المرور الافتراضية
 
-# وظيفة توليد الباركود كصورة
-def generate_barcode(data):
-    EAN = barcode.get_銘柄('code128', data, writer=ImageWriter())
-    buffer = BytesIO()
-    EAN.write(buffer)
-    return base64.b64encode(buffer.getvalue()).decode()
+st.set_page_config(page_title="Travel ERP Pro 2026", layout="wide", page_icon="🌍")
 
-st.set_page_config(page_title="Travel ERP Pro 2026", layout="wide")
-
-# تصميم CSS احترافي جداً للفاتورة
+# تصميم واجهة 2026 العصرية
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     * { font-family: 'Cairo', sans-serif; direction: rtl; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] { background-color: #fff; border-radius: 10px; padding: 10px 20px; border: 1px solid #ddd; }
+    .stTabs [aria-selected="true"] { background: linear-gradient(90deg, #002147 0%, #004d99 100%); color: white !important; }
     .invoice-card { 
-        background: #fff; border: 1px solid #eee; padding: 40px; border-radius: 0px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1); border-top: 15px solid #002147;
-        max-width: 800px; margin: auto; color: #333;
+        background: white; border: 2px solid #002147; padding: 35px; border-radius: 15px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); direction: rtl; text-align: right; margin: auto; max-width: 800px;
     }
-    .header-table { width: 100%; border-bottom: 2px solid #002147; margin-bottom: 20px; }
-    .footer-note { font-size: 12px; color: #777; margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
-    .money-box { background: #f9f9f9; padding: 20px; border-radius: 5px; margin-top: 20px; border-right: 5px solid #002147; }
+    .money-badge { background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 8px solid #002147; margin: 15px 0; }
     </style>
 """, unsafe_allow_html=True)
 
-# (هنا يوضع كود الحماية Password كما في السابق...)
-if "auth" not in st.session_state: st.session_state.auth = False
-if not st.session_state.auth:
-    pwd = st.sidebar.text_input("كلمة المرور", type="password")
-    if st.sidebar.button("دخول"):
-        if pwd == PASSWORD: st.session_state.auth = True; st.rerun()
+# نظام تسجيل الدخول
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        st.markdown("<h2 style='text-align:center;'>🔒 نظام السفر الدولي</h2>", unsafe_allow_html=True)
+        pwd = st.text_input("أدخل كلمة المرور", type="password")
+        if st.button("دخول"):
+            if pwd == PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else: st.error("❌ كلمة المرور غير صحيحة")
     st.stop()
 
-tab1, tab2, tab3 = st.tabs(["📊 البيانات", "👤 إضافة عميل", "🔍 البحث والطباعة"])
+# القائمة الرئيسية
+tab1, tab2, tab3 = st.tabs(["📊 البيانات والحسابات", "👤 تسجيل عميل جديد", "🧾 البحث وطباعة الفاتورة"])
 
+# --- تسجيل عميل جديد ---
 with tab2:
-    st.subheader("📝 تسجيل ملف جديد")
-    with st.form("reg_form"):
+    st.markdown("### ➕ إضافة ملف عميل متكامل")
+    with st.form("main_form", clear_on_submit=True):
         c1, c2, c3 = st.columns(3)
         with c1:
-            name = st.text_input("الاسم الكامل")
-            passport = st.text_input("رقم الجواز")
-            phone = st.text_input("رقم الهاتف")
+            name = st.text_input("اسم العميل / Name")
+            passport = st.text_input("رقم الجواز / Passport")
+            phone = st.text_input("رقم الهاتف / Phone")
+            email = st.text_input("الإيميل / Email")
         with c2:
-            nation = st.text_input("الجنسية")
-            service = st.selectbox("المعاملة", ["دراسة", "عمل", "سياحة"])
-            branch = st.selectbox("الفرع", ["بيلاروسيا", "مصر"])
+            nation = st.text_input("الجنسية / Nationality")
+            residence = st.text_input("بلد الإقامة / Residence")
+            service = st.selectbox("المعاملة / Service", ["دراسة", "عمل", "سياحة"])
+            branch = st.selectbox("الفرع / Branch", ["بيلاروسيا", "مصر"])
         with c3:
-            total = st.number_input("الإجمالي ($)")
-            paid = st.number_input("المدفوع ($)")
-            staff = st.text_input("الموظف")
+            v_date = st.date_input("موعد السفارة / Visa Date")
+            staff = st.text_input("الموظف المضيف / Staff")
+            status = st.selectbox("حالة الطلب / Status", ["قيد المعالجة", "تم الحجز", "مرفوض"])
+        
+        st.write("---")
+        f1, f2 = st.columns(2)
+        with f1: total = st.number_input("إجمالي المبلغ المتفق عليه ($)", min_value=0.0)
+        with f2: paid = st.number_input("المبلغ المدفوع حالياً ($)", min_value=0.0)
+        
+        if st.form_submit_button("حفظ البيانات وإصدار التتبع ✅"):
+            # توليد رقم تتبع عشوائي احترافي
+            tracking_no = f"TRK-{random.randint(100000, 999999)}-{branch[:2].upper()}"
+            # إرسال البيانات الـ 15 الأساسية (جوجل سيتولى توليد الفاتورة، الـ ID، وحساب المتبقي)
+            data = [name, passport, phone, email, nation, residence, service, status, str(v_date), str(datetime.now().date()), branch, staff, total, paid, tracking_no]
+            try:
+                requests.post(API_URL, json=data)
+                st.success(f"✅ تم الحفظ! رقم التتبع: {tracking_no}")
+                st.balloons()
+            except: st.error("خطأ في الاتصال بالسحابة.")
 
-        if st.form_submit_button("حفظ وإصدار الفاتورة ✅"):
-            # توليد رقم تتبع عشوائي احترافي مثل: TRK-859403-EG
-            track_no = f"TRK-{random.randint(100000, 999999)}-{branch[:2].upper()}"
-            row = [name, passport, phone, "", nation, "", service, "قيد المعالجة", "", str(datetime.now().date()), branch, staff, total, paid, track_no]
-            requests.post(API_URL, json=row)
-            st.success(f"تم الحفظ! رقم التتبع: {track_no}")
+# --- عرض البيانات ---
+with tab1:
+    if st.button("🔄 تحديث ومزامنة البيانات اللحظية"):
+        try:
+            res = requests.get(API_URL).json()
+            df = pd.DataFrame(res[1:], columns=res)
+            st.dataframe(df, use_container_width=True)
+        except: st.error("تأكد من اختيار Anyone في إعدادات النشر بجوجل.")
 
+# --- البحث والطباعة ---
 with tab3:
-    search = st.text_input("ابحث عن عميل للطباعة")
-    if search:
+    search_q = st.text_input("ابحث عن العميل (الاسم أو رقم الجواز)")
+    if search_q:
         res = requests.get(API_URL).json()
         df = pd.DataFrame(res[1:], columns=res)
-        match = df[df['الاسم / Name'].str.contains(search)]
+        match = df[df['الاسم / Name'].astype(str).str.contains(search_q) | df['رقم الجواز / Passport'].astype(str).str.contains(search_q)]
         
         if not match.empty:
             c = match.iloc[0]
-            barcode_base64 = generate_barcode(str(c['رقم الفاتورة / Invoice No']))
-            
             st.markdown(f"""
             <div class="invoice-card">
-                <table class="header-table">
+                <table style="width:100%">
                     <tr>
-                        <td style="text-align:right"><h1>فاتورة خدمات سفر</h1><p>INTERNATIONAL TRAVEL CO.</p></td>
-                        <td style="text-align:left"><img src="data:image/png;base64,{barcode_base64}" width="150"><br><b>{c['رقم الفاتورة / Invoice No']}</b></td>
+                        <td style="text-align:right"><h1>🧾 فاتورة شركة السفر</h1><p>INTERNATIONAL TRAVEL CO.</p></td>
+                        <td style="text-align:left"><h2 style="color:#002147">{c['رقم الفاتورة / Invoice No']}</h2><p>{c['الباركود / Barcode']}</p></td>
                     </tr>
                 </table>
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <div style="text-align:right">
+                <hr>
+                <div style="display:flex; justify-content:space-between;">
+                    <div>
                         <p><b>السيد/ة:</b> {c['الاسم / Name']}</p>
-                        <p><b>رقم الجواز:</b> {c['رقم الجواز / Passport']}</p>
-                        <p><b>الجنسية:</b> {c['الجنسية / Nationality']}</p>
+                        <p><b>الجواز:</b> {c['رقم الجواز / Passport']} | <b>الهاتف:</b> {c['الهاتف / Phone']}</p>
+                        <p><b>المعاملة:</b> {c['نوع المعاملة / Service']} | <b>الحالة:</b> {c['حالة الطلب / Status']}</p>
                     </div>
                     <div style="text-align:left">
                         <p><b>التاريخ:</b> {c['التاريخ / Date']}</p>
@@ -101,16 +121,13 @@ with tab3:
                         <p><b>الفرع:</b> {c['الفرع / Branch']}</p>
                     </div>
                 </div>
-                <div class="money-box">
-                    <table style="width:100%; text-align:center;">
-                        <tr style="background:#eee;"><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th></tr>
-                        <tr><td>{c['إجمالي الحساب / Total']}$</td><td>{c['المبلغ المدفوع / Paid']}$</td><td style="color:red; font-weight:bold;">{c['المبلغ المتبقي / Remaining']}$</td></tr>
-                    </table>
+                <div class="money-badge">
+                    <h3>💰 الموقف المالي:</h3>
+                    <p>الإجمالي: {c['إجمالي الحساب / Total']}$ | المدفوع: {c['المبلغ المدفوع / Paid']}$</p>
+                    <h2 style="color:#d32f2f">المبلغ المتبقي: {c['المبلغ المتبقي / Remaining']}$</h2>
                 </div>
-                <div class="footer-note">
-                    <p>هذه الفاتورة مستخرجة آلياً ولا تحتاج لختم - شكراً لثقتكم بنا</p>
-                    <p>بيلاروسيا - مصر | 2026</p>
-                </div>
+                <p style="text-align:center; font-size:12px; color:gray; margin-top:20px;">الموظف المسؤول: {c['الموظف المضيف / Staff']} | تم استخراجها آلياً بنظام 2026</p>
             </div>
             """, unsafe_allow_html=True)
-            st.button("🖨️ طباعة الفاتورة الآن")
+            st.button("🖨️ اضغط Ctrl + P للطباعة")
+        else: st.warning("لم يتم العثور على العميل.")
